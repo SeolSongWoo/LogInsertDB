@@ -9,11 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Map;
 
 public class DBAccess {
     private SqlSession sqlSession;
 
-    public void DBAccess () {
+    DBAccess () {
         String resource = "mabatis-config.xml";
 
         InputStream is = null;
@@ -32,8 +33,11 @@ public class DBAccess {
                 try {
                     is.close();
                 } catch (IOException e) {
+                    e.printStackTrace();
                 }
         }
+        if(sqlSession == null)
+        System.out.println("111111111111111111111111111111111111111111");
         this.sqlSession = sqlSession;
     }
 
@@ -62,36 +66,28 @@ public class DBAccess {
             map.put("glider_seq", glider_seq);
             sqlSession.insert("mybatis.Glider_Log_Put", map);
         } catch (Exception e) {
-            System.out.println("오류 재시도 남은횟수 : " + ex);
-            if (ex != 0) {
-                ex--;
-                Glider_Log_Put( colname, glider_nm, ex);
-            } else {
-                throw new Exception("");
-            }
+            throw new Exception(e.getLocalizedMessage());
         }
     }
 
-    public void Glider_Log_Data_Put(String filename, String colname, String colvalue, String glider_nm, int ex) throws Exception {
+    public void Glider_Log_Data_Put(String filename, String colname, String colvalue, String glider_nm,String CurrTime,String MissionCode, int ex) throws Exception {
+        String logtime = extractionCurrtime(CurrTime);
         HashMap<String, String> map = new HashMap<String, String>();
         try {
             String glider_seq = FindGliderSeq( glider_nm.replaceAll("_", ""));
             map.put("glider_seq", glider_seq);
             String glider_log_info_seq = FindLogSeq( colname, glider_seq);
             String glider_log_seq = FindLogInfoSeq( filename, glider_seq);
+            String glider_mis_seq = FindMissionSeq(MissionCode);
             map.put("glider_log_seq", glider_log_seq);
             map.put("glider_log_info_seq", glider_log_info_seq);
             map.put("glider_log_data_gb", colname);
             map.put("glider_log_data_val", colvalue);
+            map.put("glider_mis_seq",glider_mis_seq);
+            map.put("currtime",logtime);
             sqlSession.insert("mybatis.Glider_Log_Data_Put", map);
         } catch (Exception e) {
-            System.out.println("오류 재시도 남은횟수 : " + ex);
-            if (ex != 0) {
-                ex--;
-                Glider_Log_Put( colname, glider_nm, ex);
-            } else {
-                throw new Exception("로그의 데이터를 입력하는 과정에서 문제가 발생하였습니다.");
-            }
+            throw new Exception(e.getLocalizedMessage());
         }
     }
 
@@ -123,6 +119,14 @@ public class DBAccess {
         return glider_log_seq;
     }
 
+    public String FindMissionSeq(String MissionCode) throws Exception {
+
+        String glider_mis_seq = sqlSession.selectOne("mybatis.FindMissionSeq",MissionCode);
+        if(glider_mis_seq == null){ throw new Exception("DB에 저장된 미션정보의 키값을 찾는데 실패하였습니다."); }
+
+        return glider_mis_seq;
+    }
+
 
     public void log_file_put( String glider_nm, String filename, int ex) throws Exception {
         HashMap<String, String> map = new HashMap<String, String>();
@@ -135,13 +139,7 @@ public class DBAccess {
             map.put("reg_date", reg_date.replaceAll(".log", ""));
             sqlSession.insert("mybatis.log_file_put", map);
         } catch (Exception e) {
-            System.out.println("오류 재시도 남은횟수 : " + ex);
-            if (ex != 0) {
-                ex--;
-                log_file_put( glider_nm, filename, ex);
-            } else {
-                throw new Exception(e.getMessage());
-            }
+            throw new Exception(e.getLocalizedMessage());
         }
     }
     public String extractionFileDate(String filename) throws Exception {
@@ -158,6 +156,47 @@ public class DBAccess {
         }
         String reg_date = temp[timeindex].replaceAll("T", "");
         return reg_date;
+    }
+
+    public String extractionCurrtime(String currtime) {
+        String logtime = null;
+        String[] temp = currtime.split(" ");
+        logtime = temp[temp.length-2];
+        if(currtime.toLowerCase().contains("jan")) {
+            logtime += "01";
+        }else if(currtime.toLowerCase().contains("feb")) {
+            logtime += "02";
+        }else if(currtime.toLowerCase().contains("mar")) {
+            logtime += "03";
+        }else if(currtime.toLowerCase().contains("apr")) {
+            logtime += "04";
+        }else if(currtime.toLowerCase().contains("may")) {
+            logtime += "05";
+        }else if(currtime.toLowerCase().contains("jun")) {
+            logtime += "06";
+        }else if(currtime.toLowerCase().contains("jul")) {
+            logtime += "07";
+        }else if(currtime.toLowerCase().contains("aug")) {
+            logtime += "08";
+        }else if(currtime.toLowerCase().contains("sep")) {
+            logtime += "09";
+        }else if(currtime.toLowerCase().contains("oct")) {
+            logtime += "10";
+        }else if(currtime.toLowerCase().contains("nov")) {
+            logtime += "11";
+        }else if(currtime.toLowerCase().contains("dec")) {
+            logtime += "12";
+        }
+        String day = temp[3];
+        if(Integer.parseInt(day) < 10) {
+            day = "0"+temp[3];
+        }
+        logtime += day;
+        logtime += temp[4];
+
+
+
+        return logtime;
     }
 
 }
