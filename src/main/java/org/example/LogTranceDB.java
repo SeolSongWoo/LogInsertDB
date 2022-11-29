@@ -9,7 +9,7 @@ public class LogTranceDB {
 
         // TODO Auto-generated method stub
 
-        DBAccess dbAccess = new DBAccess();
+        DBAccess dbAccess = new DBAccessImpl();
 
         List<LinkedHashMap<String, Object>> dataList = new ArrayList<LinkedHashMap<String, Object>>();
         LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
