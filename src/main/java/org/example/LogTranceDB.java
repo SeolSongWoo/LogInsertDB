@@ -13,7 +13,6 @@ public class LogTranceDB {
 
         List<LinkedHashMap<String, Object>> dataList = new ArrayList<LinkedHashMap<String, Object>>();
         LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
-
         File dir = new File("d:/logfile/");
         File files[] = dir.listFiles();
         if (files.length != 0) {
@@ -28,6 +27,18 @@ public class LogTranceDB {
                         while ((sLine = infile.readLine()) != null) {  //반복을 돌려, 한줄 한줄 내용을 읽어드림.
                             String tempsline = sLine.replaceAll(" ", "");
                             if(tempsline.contains("MissionName")) {
+                                if (data.get("MissionName") != null) { //중복된 Key명이 발생하면, 기존 맵을 리스트로 넣고, 맵을 초기화.
+                                    data.put("filename", file.getName());
+                                    dataList.add(data);
+                                    data = new LinkedHashMap<String, Object>();
+                                }
+                                String[] temp = sLine.split(" ");
+                                String MissionName = temp[0];
+                                String[] MissionName_temp = MissionName.split(":");
+                                String MissionCode = temp[1];
+                                String[] MissionCode_temp = MissionCode.split(":");
+                                data.put("MissionName",MissionName_temp[1]);
+                                data.put("MissionCode",MissionCode_temp[1]);
                                 check = 1;
                             }
 
@@ -37,12 +48,8 @@ public class LogTranceDB {
                             if (tempsline.contains("LOGFILECLOSED")) {  //LOGFILECLOSED 즉, 로그파일이 끝나는 구문이 있으면 해당파일 읽기 종료
                                 break;
                             }
+
                             if (tempsline.contains("VehicleName")) {
-                                if (data.get("VehicleName") != null) { //중복된 Key명이 발생하면, 기존 맵을 리스트로 넣고, 맵을 초기화.
-                                    data.put("filename", file.getName());
-                                    dataList.add(data);
-                                    data = new LinkedHashMap<String, Object>();
-                                }
                                 String[] temp = tempsline.split(":");
                                 data.put("VehicleName", temp[1]);
                                 glider_nm = temp[1];
@@ -75,14 +82,6 @@ public class LogTranceDB {
                                 String temp3 = temp2[0];
                                 String[] sensor = temp3.split("=");
                                 data.put(sensor[0], sensor[1]);
-                            } else if(tempsline.contains("MissionName")) {
-                                String[] temp = sLine.split(" ");
-                                String MissionName = temp[0];
-                                String[] MissionName_temp = MissionName.split(":");
-                                String MissionCode = temp[1];
-                                String[] MissionCode_temp = MissionCode.split(":");
-                                data.put("MissionName",MissionName_temp[1]);
-                                data.put("MissionCode",MissionCode_temp[1]);
                             }
                         }
                         data.put("filename", file.getName());
@@ -113,8 +112,9 @@ public class LogTranceDB {
                                     int overlabVal = 0;
                                     overlabVal = dbAccess.overlabCheck( key, glider_nm); // 중복체크 (넣으려는 로그명이 이미 있는가?)
                                     if (overlabVal == 1) { // 있으면 로그 데이터만 DB에 입력
-                                        dbAccess.Glider_Log_Data_Put(filename, key, dataList.get(i).get(key).toString(), glider_nm,dataList.get(i).get("CurrTime").toString(),dataList.get(i).get("MissionCode").toString(), 3);
-                                    } else { // 없으면, 로그명을 새로 입력하고, 데이터 입력
+                                            dbAccess.Glider_Log_Data_Put(filename, key, dataList.get(i).get(key).toString(), glider_nm, dataList.get(i).get("CurrTime").toString(), dataList.get(i).get("MissionCode").toString(), 3);
+
+                                        } else { // 없으면, 로그명을 새로 입력하고, 데이터 입력
                                         dbAccess.Glider_Log_Put( key, glider_nm, 3);
                                         dbAccess.Glider_Log_Data_Put( filename, key, dataList.get(i).get(key).toString(), glider_nm,dataList.get(i).get("CurrTime").toString(),dataList.get(i).get("MissionCode").toString(), 3);
                                     }
@@ -129,6 +129,7 @@ public class LogTranceDB {
                             dbAccess.rollback(); //위 작업들의 문제가 발생하면 롤백.
                             System.out.println(file.getName()+"파일 DB저장 실패");
                             e.printStackTrace();
+
                         }
                     }
                 }

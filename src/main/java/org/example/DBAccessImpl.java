@@ -35,7 +35,6 @@ public class DBAccessImpl implements DBAccess{
                     e.printStackTrace();
                 }
         }
-        if(sqlSession == null)
         this.sqlSession = sqlSession;
     }
 
@@ -85,6 +84,7 @@ public class DBAccessImpl implements DBAccess{
             map.put("currtime",logtime);
             sqlSession.insert("mybatis.Glider_Log_Data_Put", map);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new Exception(e.getLocalizedMessage());
         }
     }
@@ -127,6 +127,7 @@ public class DBAccessImpl implements DBAccess{
 
 
     public void log_file_put( String glider_nm, String filename, int ex) throws Exception {
+        System.out.println(sqlSession.toString());
         HashMap<String, String> map = new HashMap<String, String>();
         try {
             String glider_nms = glider_nm.replaceAll("_", "");
